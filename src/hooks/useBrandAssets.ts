@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchDashboardData } from "@/lib/publicDashboard";
+import { supabase } from "@supabaseClient";
 
 export function useBrandAssets() {
   const [assets, setAssets] = useState<Record<string, string>>({});
@@ -9,18 +10,36 @@ export function useBrandAssets() {
     let alive = true;
     setLoading(true);
 
-    fetchDashboardData()
-      .then((payload) => {
+    (async () => {
+      try {
+        const payload = await fetchDashboardData();
         if (!alive) return;
-        setAssets(payload?.assets || {});
-      })
-      .catch((err) => {
+        if (payload?.assets && Object.keys(payload.assets).length) {
+          setAssets(payload.assets);
+          return;
+        }
+
+        // Fallback: read directly from brand_assets table if edge function doesn't supply assets
+        const { data, error } = await supabase
+          .from("brand_assets")
+          .select("key, value");
+        if (error) {
+          console.error("Fallback brand_assets fetch failed", error.message);
+          if (alive) setAssets({});
+          return;
+        }
+        const map: Record<string, string> = {};
+        for (const row of data || []) {
+          if (row.key) map[row.key] = row.value ?? "";
+        }
+        setAssets(map);
+      } catch (err) {
         console.error("Failed to load assets", err);
         if (alive) setAssets({});
-      })
-      .finally(() => {
+      } finally {
         if (alive) setLoading(false);
-      });
+      }
+    })();
 
     return () => {
       alive = false;
