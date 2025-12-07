@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchDashboardData } from "@/lib/publicDashboard";
+import { supabase } from "@supabaseClient";
 
 export function useInstagramAudience() {
   const [audience, setAudience] = useState<Record<string, any> | null>(null);
@@ -9,18 +10,35 @@ export function useInstagramAudience() {
     let alive = true;
     setLoading(true);
 
-    fetchDashboardData()
-      .then((payload) => {
+    (async () => {
+      try {
+        const payload = await fetchDashboardData();
         if (!alive) return;
-        setAudience(payload?.audience ?? null);
-      })
-      .catch((err) => {
-        console.error("Failed to load audience", err);
+        if (payload?.audience) {
+          setAudience(payload.audience);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to load audience via edge", err);
+      }
+
+      // fallback: read from platform_audience
+      try {
+        const { data, error } = await supabase
+          .from("platform_audience")
+          .select("*")
+          .eq("platform", "instagram")
+          .maybeSingle();
+        if (error) throw error;
+        if (alive) setAudience(data as any);
+      } catch (err) {
+        console.error("Fallback platform_audience fetch failed", err);
         if (alive) setAudience(null);
-      })
-      .finally(() => {
+      } finally {
         if (alive) setLoading(false);
-      });
+      }
+    })();
 
     return () => {
       alive = false;
