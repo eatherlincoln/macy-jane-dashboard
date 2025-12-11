@@ -16,7 +16,10 @@ export type DashboardPayload = {
   assets?: Record<string, string>;
 };
 
-const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-dashboard`;
+// Prefer explicit override; otherwise always hit the Supabase function directly.
+const endpoint =
+  import.meta.env.VITE_PUBLIC_DASHBOARD_URL ||
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-dashboard`;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let cacheVersion: number | null = null;
@@ -67,4 +70,10 @@ export async function fetchDashboardData(version?: number) {
     });
 
   return inFlight;
+}
+
+export function invalidateDashboardCache() {
+  cacheVersion = null;
+  cacheData = null;
+  inFlight = null;
 }

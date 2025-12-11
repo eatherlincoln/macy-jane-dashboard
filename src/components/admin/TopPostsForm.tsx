@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { invalidateDashboardCache } from "@/lib/publicDashboard";
 import { supabase } from "@supabaseClient";
 
 type PostRow = {
@@ -30,6 +31,7 @@ export default function TopPostsForm() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<Record<number, boolean>>({});
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,6 +74,30 @@ export default function TopPostsForm() {
   const setField = (rank: number, key: keyof PostRow, value: string) =>
     setRows((prev) => ({ ...prev, [rank]: { ...prev[rank], [key]: value } }));
 
+  const uploadThumbnail = async (rank: number, file: File) => {
+    setMsg(null);
+    setUploading((prev) => ({ ...prev, [rank]: true }));
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `thumbnails/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("post-thumbnails")
+        .upload(path, file, { cacheControl: "3600", upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("post-thumbnails").getPublicUrl(path);
+      if (data?.publicUrl) {
+        setField(rank, "image_url", data.publicUrl);
+        setMsg(`Uploaded thumbnail for post #${rank}`);
+      }
+    } catch (err: any) {
+      console.error("Upload thumbnail error", err?.message || err);
+      setMsg(err?.message || "Upload failed");
+    } finally {
+      setUploading((prev) => ({ ...prev, [rank]: false }));
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     setMsg(null);
@@ -98,6 +124,7 @@ export default function TopPostsForm() {
       console.error("Save top_posts error", error.message);
       setMsg(error.message);
     } else {
+      invalidateDashboardCache();
       setMsg("Saved top posts ✅");
     }
     setSaving(false);
@@ -157,6 +184,11 @@ export default function TopPostsForm() {
                     onChange={(v) => setField(rank, "image_url", v)}
                     placeholder="https://…/image.jpg"
                   />
+                  <FileUpload
+                    label="Upload thumbnail (optional)"
+                    loading={!!uploading[rank]}
+                    onSelect={(file) => uploadThumbnail(rank, file)}
+                  />
 
                   <div className="grid grid-cols-3 gap-2">
                     <Field
@@ -208,6 +240,33 @@ function Field({
         placeholder={placeholder}
       />
     </label>
+  );
+}
+
+function FileUpload({
+  label,
+  loading,
+  onSelect
+}: {
+  label: string;
+  loading: boolean;
+  onSelect: (file: File) => void;
+}) {
+  return (
+    <div className="text-sm text-neutral-700">
+      {label}
+      <input
+        type="file"
+        accept="image/*"
+        disabled={loading}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onSelect(file);
+        }}
+        className="mt-1 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-neutral-800 hover:file:bg-neutral-200 disabled:cursor-not-allowed disabled:file:bg-neutral-200"
+      />
+      {loading && <p className="text-xs text-neutral-500">Uploading…</p>}
+    </div>
   );
 }
 

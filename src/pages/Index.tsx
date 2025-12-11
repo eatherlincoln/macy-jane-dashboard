@@ -4,6 +4,7 @@ import AboutSection from "@/components/AboutSection";
 import InstagramKpiRow from "@/components/InstagramKpiRow";
 import AudienceDemographics from "@/components/AudienceDemographics";
 import InstagramTopPosts from "@/components/InstagramTopPosts";
+import PartnershipOpportunities from "@/components/PartnershipOpportunities";
 
 export default function IndexPage() {
   return (
@@ -35,6 +36,10 @@ export default function IndexPage() {
             </div>
             <InstagramTopPosts />
           </div>
+        </section>
+
+        <section className="mt-8">
+          <PartnershipOpportunities />
         </section>
       </main>
     </div>

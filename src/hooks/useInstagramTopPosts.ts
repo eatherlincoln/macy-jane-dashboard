@@ -10,6 +10,9 @@ export type InstagramPost = {
   likes?: number | null;
   comments?: number | null;
   shares?: number | null;
+  saves?: number | null;
+  reach?: number | null;
+  impressions?: number | null;
   updated_at?: string | null;
 };
 
