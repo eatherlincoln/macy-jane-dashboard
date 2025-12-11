@@ -16,6 +16,7 @@ export function useBrandAssets() {
         if (!alive) return;
         if (payload?.assets && Object.keys(payload.assets).length) {
           setAssets(payload.assets);
+          setLoading(false);
           return;
         }
 

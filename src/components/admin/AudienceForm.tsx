@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { invalidateDashboardCache } from "@/lib/publicDashboard";
 import { supabase } from "@supabaseClient";
 
 type CountryCity = { label: string; pct: string };
@@ -119,6 +120,7 @@ export default function AudienceForm() {
       console.error("Save audience error", error.message);
       setMsg(error.message);
     } else {
+      invalidateDashboardCache();
       setMsg("Saved audience ✅");
     }
     setSaving(false);

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { invalidateDashboardCache } from "@/lib/publicDashboard";
 import { supabase } from "@supabaseClient";
 
 type AssetKey =
@@ -122,6 +123,7 @@ export default function BrandAssetsForm() {
       console.error("Save brand_assets error", error.message);
       setMsg(error.message);
     } else {
+      invalidateDashboardCache();
       setMsg("Brand assets saved ✅");
     }
     setSaving(false);

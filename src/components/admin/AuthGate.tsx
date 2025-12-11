@@ -6,23 +6,24 @@ type Props = { children: React.ReactNode };
 export default function AuthGate({ children }: Props) {
   const { session, loading, signIn } = useSupabaseAuth();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
-    if (!email.trim()) {
-      setStatus("Enter an email to receive the magic link.");
+    if (!email.trim() || !password) {
+      setStatus("Enter your email and password.");
       return;
     }
     setSubmitting(true);
-    const { error } = await signIn(email.trim());
+    const { error } = await signIn(email.trim(), password);
     setSubmitting(false);
     if (error) {
       setStatus(error.message);
     } else {
-      setStatus("Check your inbox for the magic link.");
+      setStatus(null);
     }
   };
 
@@ -44,7 +45,7 @@ export default function AuthGate({ children }: Props) {
             Macy Jane Admin
           </h1>
           <p className="mt-1 text-sm text-neutral-600">
-            Sign in with your email to receive a magic link.
+            Sign in with your admin email and password.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-3">
@@ -56,6 +57,19 @@ export default function AuthGate({ children }: Props) {
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-neutral-500"
                 placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </label>
+            <label className="block text-sm text-neutral-700">
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 text-sm outline-none focus:border-neutral-500"
+                placeholder="••••••••"
+                autoComplete="current-password"
                 required
               />
             </label>
@@ -64,12 +78,12 @@ export default function AuthGate({ children }: Props) {
               disabled={submitting}
               className="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300"
             >
-              {submitting ? "Sending…" : "Send magic link"}
+              {submitting ? "Signing in…" : "Sign in"}
             </button>
           </form>
 
           {status && (
-            <p className="mt-3 text-sm text-neutral-600">
+            <p className="mt-3 text-sm text-rose-600">
               {status}
             </p>
           )}

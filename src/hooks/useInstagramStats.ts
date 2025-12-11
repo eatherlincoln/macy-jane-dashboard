@@ -58,9 +58,10 @@ export function useInstagramStats() {
             engagement_delta:
               typeof row.engagement_delta === "number"
                 ? row.engagement_delta
-                : null,
+              : null,
             updated_at: row.updated_at ?? null
           });
+          setLoading(false);
           return;
         }
       } catch (err) {

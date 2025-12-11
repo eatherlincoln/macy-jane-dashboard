@@ -31,7 +31,7 @@ export function useInstagramAudience() {
           .eq("platform", "instagram")
           .maybeSingle();
         if (error) throw error;
-        if (alive) setAudience(data as any);
+        if (alive) setAudience((data as any) || null);
       } catch (err) {
         console.error("Fallback platform_audience fetch failed", err);
         if (alive) setAudience(null);

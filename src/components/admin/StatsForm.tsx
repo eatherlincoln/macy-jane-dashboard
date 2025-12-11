@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { invalidateDashboardCache } from "@/lib/publicDashboard";
 import { supabase } from "@supabaseClient";
 
 type FormState = {
@@ -73,6 +74,7 @@ export default function StatsForm() {
       console.error("Save platform_stats error", error.message);
       setMsg(error.message);
     } else {
+      invalidateDashboardCache();
       setMsg("Saved Instagram KPIs ✅");
     }
     setSaving(false);

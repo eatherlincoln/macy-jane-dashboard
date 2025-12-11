@@ -31,7 +31,8 @@ export function useSupabaseAuth() {
     };
   }, []);
 
-  const signIn = (email: string) => supabase.auth.signInWithOtp({ email });
+  const signIn = (email: string, password: string) =>
+    supabase.auth.signInWithPassword({ email, password });
   const signOut = () => supabase.auth.signOut();
 
   return { session, loading, signIn, signOut };
